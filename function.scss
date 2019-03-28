@@ -2,43 +2,52 @@
 
 // BEM support Func
 
-@function selectorToString($selector) {
-  $selector: inspect($selector);
-  $selector: str-slice($selector, 2, -2);
+/// @see {@link [Combinators](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors#Combinators "CSS selectors")} -
+$__selector-combinators: ("+", "~", ">", "||");
 
-  @return $selector;
-}
-
-@function containsModifier($selector) {
-  $selector: selectorToString($selector);
-
-  @if str-index($selector, $modifier-separator) {
-    @return true;
+@function __selector-ensure($selector) {
+  @if null == $selector {
+    @return selector-parse("");
   } @else {
-    @return false;
+    @return $selector;
   }
 }
 
-@function containWhenFlag($selector) {
-  $selector: selectorToString($selector);
+@function bem($block, $element: null, $modifier: null) {
+    $level: "#{$namespace}#{$block}";
 
-  @if str-index($selector, '.' + $state-prefix) {
-    @return true;
-  } @else {
-    @return false;
-  }
+    @if (null != $element) {
+        $level: "#{$level}#{$element-separator}#{$element}";
+    }
+
+    @if (null != $modifier) {
+        $level: "#{$level}#{$modifier-separator}#{$modifier}";
+    }
+
+    @return $level;
 }
 
-@function containPseudoClass($selector) {
-  $selector: selectorToString($selector);
+@function bem-extend($selectors, $extendee, $extender) {
+  $returns: ();
 
-  @if str-index($selector, ':') {
-    @return true;
-  } @else {
-    @return false;
+  @for $i from 1 through length($selectors) {
+    $selector: nth($selectors, $i);
+    $selector-len: length($selector);
+
+    @if nth($selector, $selector-len) == $extendee {
+      @if $selector-len >= 2 {
+        @if index($__selector-combinators, nth($selector, $selector-len - 1)) == null {
+          $returns: append($returns, set-nth($selector, $selector-len, $extender), "comma");
+        } @else {
+          $returns: append($returns, append($selector, $extender), "comma");
+        }
+      } @else {
+        $returns: append($returns, ($extender), "comma");
+      }
+    } @else {
+      $returns: append($returns, append($selector, $extender), "comma");
+    }
   }
-}
 
-@function hitAllSpecialNestRule($selector) {
-  @return containsModifier($selector) or containWhenFlag($selector) or containPseudoClass($selector);
+  @return $returns;
 }

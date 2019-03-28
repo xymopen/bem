@@ -2,98 +2,99 @@
 
 // BEM
 
-@mixin b($block) {
-  $B: $namespace+$block !global;
+$__BEM: null;
 
-  .#{$B} {
-    @content;
+@mixin b($block) {
+  $lastBEM: $__BEM;
+  $__BEM: ($block, null, null) !global;
+
+  @if null == $block {
+    @error "Argument `$block` of mixin \"b\" must not be null";
+  } @else {
+    .#{bem($block)} {
+      @content;
+    }
+  }
+
+  $__BEM: $lastBEM !global;
+}
+
+@mixin e($elements) {
+  @if null == $__BEM {
+    @error "Base-level rules cannot contain an element mixin";
+  } @else if null != nth($__BEM, 2) {
+    @error "Element-level rules cannot contain another element mixin";
+  } @else {
+    $block: nth($__BEM, 1);
+
+    $lastBEM: $__BEM;
+    $__BEM: ($block, $elements, null) !global;
+
+    $parent: ".#{bem($block)}";
+    $current: ();
+
+    @each $element in $elements {
+      @if null == $element {
+        @error "Argument `$elements` of mixin \"e\" must not contains null";
+      } @else {
+        $current: append(
+          $current,
+          bem-extend(__selector-ensure(&), $parent, ".#{bem($block, $element)}"),
+          "comma",
+        );
+      }
+    }
+
+    @at-root {
+      #{$current} {
+        @content;
+      }
+    }
+
+    $__BEM: $lastBEM !global;
   }
 }
 
-@mixin e($element) {
-  $E: $element !global;
-  $selector: &;
-  $currentSelector: "";
-  @each $unit in $element {
-    $currentSelector: #{$currentSelector + "." + $B + $element-separator + $unit + ","};
-  }
+@mixin m($modifiers) {
+  @if null == $__BEM {
+    @error "Base-level rules cannot contain a modifier mixin";
+  } @else if null != nth($__BEM, 3) {
+    @error "Modifier-level rules cannot contain another modifier mixin";
+  } @else {
+    $block: nth($__BEM, 1);
+    $elements: nth($__BEM, 2);
 
-  @if hitAllSpecialNestRule($selector) {
-    @at-root {
-      #{$selector} {
-        #{$currentSelector} {
+    @if (null == $elements) {
+      $elements: (null);
+    }
+
+    $lastBEM: $__BEM;
+    $__BEM: ($block, $elements, $modifiers) !global;
+
+    @each $element in $elements {
+      $parent: ".#{bem($block, $element)}";
+      $current: ();
+
+      @each $modifier in $modifiers {
+        @if null == $modifier {
+          @error "Argument `$modifiers` of mixin \"m\" must not contains null";
+        } @else {
+          $current: append(
+            $current,
+            bem-extend(__selector-ensure(&), $parent, ".#{bem($block, $element, $modifier)}"),
+            "comma",
+          );
+        }
+      }
+
+      @at-root {
+        #{$current} {
           @content;
         }
       }
     }
-  } @else {
-    @at-root {
-      #{$currentSelector} {
-        @content;
-      }
-    }
-  }
-}
 
-@mixin m($modifier) {
-  $selector: &;
-  $currentSelector: "";
-  @each $unit in $modifier {
-    $currentSelector: #{$currentSelector + & + $modifier-separator + $unit + ","};
-  }
-
-  @at-root {
-    #{$currentSelector} {
-      @content;
-    }
-  }
-}
-
-@mixin configurable-m($modifier, $E-flag: false) {
-  $selector: &;
-  $interpolation: '';
-
-  @if $E-flag {
-    $interpolation: $element-separator + $E-flag;
-  }
-
-  @at-root {
-    #{$selector} {
-      .#{$B+$interpolation+$modifier-separator+$modifier} {
-        @content;
-      }
-    }
-  }
-}
-
-@mixin spec-selector($specSelector: '', $element: $E, $modifier: false, $block: $B) {
-  $modifierCombo: '';
-
-  @if $modifier {
-    $modifierCombo: $modifier-separator + $modifier;
-  }
-
-  @at-root {
-    #{&}#{$specSelector}.#{$block+$element-separator+$element+$modifierCombo} {
-      @content;
-    }
-  }
-}
-
-@mixin meb($modifier: false, $element: $E, $block: $B) {
-  $selector: &;
-  $modifierCombo: '';
-
-  @if $modifier {
-    $modifierCombo: $modifier-separator + $modifier;
-  }
-
-  @at-root {
-    #{$selector} {
-      .#{$block+$element-separator+$element+$modifierCombo} {
-        @content;
-      }
-    }
+    $__BEM: $lastBEM !global;
   }
 }
 
