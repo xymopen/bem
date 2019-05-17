@@ -3,7 +3,7 @@
 // BEM
 
 @mixin b($block) {
-  $B: $namespace+'-'+$block !global;
+  $B: $namespace+$block !global;
 
   .#{$B} {
     @content;
