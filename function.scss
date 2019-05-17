@@ -1,7 +1,7 @@
 @import "config";
 
-/* BEM support Func
- -------------------------- */
+// BEM support Func
+
 @function selectorToString($selector) {
   $selector: inspect($selector);
   $selector: str-slice($selector, 2, -2);
